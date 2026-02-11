@@ -1,3 +1,4 @@
+// op-co-ca/src/app/calc/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import { TemplateService } from '@/lib/services';
 import { CalculatorEngine } from '@/components/calculator/CalculatorEngine';
@@ -12,9 +13,15 @@ interface Props {
 }
 
 // 동적 페이지: ID를 받아 데이터를 fetch하고 컴포넌트에 주입
-export default async function CalculatorPage({ params }: Props) {
+export default async function CalculatorPage({ 
+  params 
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params; // URL에서 ID 추출
+
   try {
-    const template = await TemplateService.getTemplateById(params.id);
+    const template = await TemplateService.getTemplateById(id);
 
     if (!template) {
       notFound(); // 템플릿이 없으면 404 페이지로 이동
