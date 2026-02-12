@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Trophy, ArrowRight, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// 1. useToast 삭제 -> toast 직접 임포트
 import { toast } from 'sonner'; 
 
 interface Props {
@@ -24,7 +23,6 @@ interface Scenario {
 export function CalculatorEngine({ template }: Props) {
   const [localSchema, setLocalSchema] = useState<Criterion[]>(template.schema);
   const [isWeightEditMode, setIsWeightEditMode] = useState(false);
-  // 2. const { toast } = useToast(); -> 삭제
 
   const [scenarios, setScenarios] = useState<Scenario[]>([
     { id: 'A', name: 'Option A', values: {} },
@@ -125,7 +123,6 @@ export function CalculatorEngine({ template }: Props) {
               onClick={() => {
                 const nextMode = !isWeightEditMode;
                 setIsWeightEditMode(nextMode);
-                // 3. sonner 토스트 적용
                 if (nextMode) {
                   toast.info("가중치 수정 모드 활성화", {
                     description: "평가 항목의 중요도(가중치)를 직접 변경할 수 있습니다.",
