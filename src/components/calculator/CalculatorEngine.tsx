@@ -1,3 +1,5 @@
+// src/components/calculator/CalculatorEngine.tsx
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -6,9 +8,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Trophy, ArrowRight, Settings2 } from 'lucide-react';
+import { Plus, Trash2, Trophy, ArrowRight, Settings2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
 
 interface Props {
   template: Template;
@@ -23,13 +25,16 @@ interface Scenario {
 export function CalculatorEngine({ template }: Props) {
   const [localSchema, setLocalSchema] = useState<Criterion[]>(template.schema);
   const [isWeightEditMode, setIsWeightEditMode] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const [scenarios, setScenarios] = useState<Scenario[]>([
     { id: 'A', name: 'Option A', values: {} },
     { id: 'B', name: 'Option B', values: {} },
   ]);
 
+  // [복구됨] 이전에 입력했던 값 불러오기 및 최근 템플릿 저장
   useEffect(() => {
+    // 1. 최근 본 템플릿 저장
     const saveToRecent = () => {
       const stored = localStorage.getItem('recent_templates');
       let recents: Template[] = stored ? JSON.parse(stored) : [];
@@ -39,7 +44,43 @@ export function CalculatorEngine({ template }: Props) {
       localStorage.setItem('recent_templates', JSON.stringify(recents));
     };
     saveToRecent();
+
+    // 2. 이 템플릿에서 이전에 입력했던 값(점수 등) 불러오기
+    const savedData = localStorage.getItem(`calc_data_${template.id}`);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.schema) setLocalSchema(parsed.schema);
+        if (parsed.scenarios) setScenarios(parsed.scenarios);
+      } catch (e) {
+        console.error("Failed to load saved data");
+      }
+    }
+    setIsLoaded(true);
   }, [template]);
+
+  // [복구됨] 입력할 때마다 자동 저장
+  useEffect(() => {
+    if (!isLoaded) return;
+    const dataToSave = {
+      schema: localSchema,
+      scenarios: scenarios,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(`calc_data_${template.id}`, JSON.stringify(dataToSave));
+  }, [localSchema, scenarios, template.id, isLoaded]);
+
+  // [복구됨] 리셋 기능
+  const handleReset = () => {
+    if (confirm("입력한 모든 값을 초기화하시겠습니까?\n(템플릿 구조는 유지됩니다)")) {
+      setScenarios([
+        { id: 'A', name: 'Option A', values: {} },
+        { id: 'B', name: 'Option B', values: {} },
+      ]);
+      localStorage.removeItem(`calc_data_${template.id}`);
+      toast.success("초기화 완료", { description: "모든 입력값이 삭제되었습니다." });
+    }
+  };
 
   const handleWeightChange = (criterionId: string, newWeight: string) => {
     const weight = parseFloat(newWeight);
@@ -94,6 +135,8 @@ export function CalculatorEngine({ template }: Props) {
 
   const winner = results.find(r => r.isWinner);
 
+  if (!isLoaded) return null; // 로딩 중 화면 깜빡임 방지
+
   return (
     <div className="space-y-8">
       {winner && (
@@ -112,11 +155,11 @@ export function CalculatorEngine({ template }: Props) {
       )}
 
       <div className="space-y-4">
-        <div className="flex justify-between items-center px-1">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-1">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <ArrowRight className="w-5 h-5 text-primary" /> 상세 비교
           </h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <Button 
               variant={isWeightEditMode ? "secondary" : "ghost"} 
               size="sm" 
@@ -124,9 +167,7 @@ export function CalculatorEngine({ template }: Props) {
                 const nextMode = !isWeightEditMode;
                 setIsWeightEditMode(nextMode);
                 if (nextMode) {
-                  toast.info("가중치 수정 모드 활성화", {
-                    description: "평가 항목의 중요도(가중치)를 직접 변경할 수 있습니다.",
-                  });
+                  toast.info("가중치 수정 모드 활성화", { description: "평가 항목의 중요도(가중치)를 변경할 수 있습니다." });
                 } else {
                   toast.success("가중치 설정 저장 완료");
                 }
@@ -135,6 +176,15 @@ export function CalculatorEngine({ template }: Props) {
               <Settings2 className="w-4 h-4 mr-2" />
               {isWeightEditMode ? "수정 완료" : "가중치 수정"}
             </Button>
+            
+            <div className="flex-1"></div> {/* 모바일에서 간격 띄우기 */}
+
+            {/* [복구됨] 초기화 버튼 */}
+            <Button onClick={handleReset} variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              초기화
+            </Button>
+
             <Button onClick={addScenario} variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-2" /> 옵션 추가
             </Button>
@@ -143,7 +193,6 @@ export function CalculatorEngine({ template }: Props) {
 
         <div className="overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0">
           <div className="flex gap-4 min-w-max">
-            {/* 왼쪽 헤더 생략 (로직 동일) */}
             <div className="w-[140px] flex-shrink-0 pt-[84px] space-y-2 hidden md:block">
               {localSchema.map(c => (
                 <div key={c.id} className="h-[72px] flex flex-col justify-center text-sm font-medium text-muted-foreground border-b border-transparent">
@@ -166,7 +215,6 @@ export function CalculatorEngine({ template }: Props) {
               <div className="h-16 flex items-center font-bold text-lg pt-4 border-t">총점</div>
             </div>
 
-            {/* 시나리오 카드 리스트 */}
             {results.map((scenario) => (
               <Card key={scenario.id} className={cn("w-[260px] flex-shrink-0 transition-all duration-200", scenario.isWinner ? "border-primary shadow-lg ring-1 ring-primary/20" : "border-border hover:border-primary/50")}>
                 <div className={cn("p-4 border-b", scenario.isWinner && "bg-primary/5")}>

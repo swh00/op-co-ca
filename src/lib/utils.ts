@@ -22,7 +22,7 @@ export const exportTemplateToJson = (template: Template) => {
 
 // 공유용 URL 복사
 export const copyShareLink = (templateId: string) => {
-  const shareUrl = `${window.location.origin}/calculate/${templateId}`;
+  const shareUrl = `${window.location.origin}/calc/${templateId}`;
   navigator.clipboard.writeText(shareUrl);
   return shareUrl;
 };
