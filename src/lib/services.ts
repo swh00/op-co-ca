@@ -14,12 +14,16 @@ export const TemplateService = {
     return data[0];
   },
 
-  // 2. 전체 템플릿 목록 가져오기 (커뮤니티용)
-  async getPublicTemplates() {
+  async getPublicTemplates(page: number = 1, limit: number = 12) {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
     const { data, error } = await supabase
       .from('templates')
       .select('*')
-      .order('created_at', { ascending: false });
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .range(from, to); // 데이터 범위 지정
 
     if (error) throw error;
     return data as Template[];
