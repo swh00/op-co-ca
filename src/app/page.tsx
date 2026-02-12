@@ -23,7 +23,7 @@ export default async function Home({
   const params = await searchParams;
   const query = params.q || '';
   const currentPage = Number(params.page) || 1;
-  const itemsPerPage = 9; // 한 페이지당 보여줄 개수
+  const itemsPerPage = 10; // 한 페이지당 보여줄 개수
 
   // [변경] 서비스 호출 시 검색어와 페이지 전달
   const { data: templates, count } = await TemplateService.getPublicTemplates(currentPage, itemsPerPage, query);
