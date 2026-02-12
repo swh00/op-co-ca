@@ -1,21 +1,38 @@
 // src/app/page.tsx
-// RecentTemplates 컴포넌트를 상단에 배치하고, FileImporter 컴포넌트를 헤더에 추가
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { TemplateService } from '@/lib/services';
-import { RecentTemplates } from '@/components/home/RecentTemplates'; 
-import { FileImporter } from '@/components/shared/FileImporter'; 
-import { Plus, Calculator, Globe } from 'lucide-react';
+import { RecentTemplates } from '@/components/home/RecentTemplates';
+import { FileImporter } from '@/components/shared/FileImporter';
 import { NewTemplateButton } from '@/components/home/NewTemplateButton';
+import { SearchInput } from '@/components/home/SearchInput'; // [추가]
+import { PaginationControls } from '@/components/shared/PaginationControls'; // [추가]
+import { Calculator, Globe } from 'lucide-react';
+
 export const revalidate = 0;
 
-export default async function Home() {
-  const templates = await TemplateService.getPublicTemplates();
+// [변경] searchParams를 props로 받습니다.
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>; // Next.js 15+는 Promise, 14 이하는 그냥 객체
+}) {
+  // Next.js 15라면 await 필요, 14라면 바로 사용. (안전하게 await 처리)
+  const params = await searchParams;
+  const query = params.q || '';
+  const currentPage = Number(params.page) || 1;
+  const itemsPerPage = 9; // 한 페이지당 보여줄 개수
+
+  // [변경] 서비스 호출 시 검색어와 페이지 전달
+  const { data: templates, count } = await TemplateService.getPublicTemplates(currentPage, itemsPerPage, query);
+  
+  // 총 페이지 수 계산
+  const totalPages = Math.ceil((count || 0) / itemsPerPage);
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50">
-      {/* 헤더: 로고, 가져오기, 만들기 */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur dark:bg-slate-950/95">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl text-primary">
@@ -30,13 +47,17 @@ export default async function Home() {
       </header>
 
       <div className="container mx-auto px-4 py-8 space-y-12">
-        {/* 섹션 1: 서버에 저장된 최신 템플릿 (요청하신 상단 배치) */}
+        
+        {/* 최신 템플릿 리스트 섹션 */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Globe className="w-6 h-6 text-primary" />
-              최신 공유 템플릿
+              {query ? `'${query}' 검색 결과` : '최신 공유 템플릿'}
             </h2>
+            
+            {/* [추가] 검색창 배치 */}
+            <SearchInput />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -64,16 +85,18 @@ export default async function Home() {
                 </Card>
               ))
             ) : (
-              <div className="col-span-full text-center py-10 text-muted-foreground">
-                등록된 템플릿이 없습니다.
+              <div className="col-span-full text-center py-20 text-muted-foreground border-2 border-dashed rounded-xl">
+                {query ? '검색 결과가 없습니다.' : '등록된 템플릿이 없습니다.'}
               </div>
             )}
           </div>
+
+          {/* [추가] 페이지네이션 컨트롤 */}
+          <PaginationControls totalPages={totalPages} />
         </section>
 
-        {/* 섹션 2: 내가 최근에 사용한 템플릿 (하단 배치) */}
-        <RecentTemplates />
-
+        {/* 최근 본 템플릿 (검색 중일 땐 헷갈리니까 숨길 수도 있음. 여기선 항상 표시) */}
+        {!query && <RecentTemplates />}
       </div>
     </main>
   );
