@@ -91,7 +91,7 @@ Next.js 14와 Supabase를 기반으로 구축되었으며, 네트워크 연결�
 ### 1️⃣ 레포지토리 클론
 
 ~~~bash
-git clone https://github.com/your-username/cost-benefit-blueprint.git
+git clone https://github.com/swh00/op-co-ca.git
 cd cost-benefit-blueprint
 ~~~
 
