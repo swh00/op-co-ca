@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { TemplateService } from '@/lib/services';
 import { CalculatorEngine } from '@/components/calculator/CalculatorEngine';
 import { CalculatorActions } from '@/components/calculator/CalculatorActions'; // <--- 새로 만든 컴포넌트 import
+import { LocalCalculatorLoader } from '@/components/calculator/LocalCalculatorLoader'; // 새 컴포넌트
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -13,6 +14,10 @@ interface Props {
 
 export default async function CalculatorPage({ params }: Props) {
   const { id } = await params;
+  if (id.startsWith('local_')) {
+    return <LocalCalculatorLoader id={id} />;
+  }
+  
 
   try {
     const template = await TemplateService.getTemplateById(id);

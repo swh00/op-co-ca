@@ -22,7 +22,11 @@ export function RecentTemplates({ publicTemplates }: Props) {
         const parsedRecents: Template[] = JSON.parse(stored);
 
         const validRecents = parsedRecents.filter(recent => {
-          if (!recent.id) return true; // ID가 없으면 로컬 파일용이므로 유지
+          // 1. ID 자체가 없으면 데이터가 깨진 것이므로 제외
+          if (!recent.id) return false;
+          // 2. 로컬 저장 데이터인 경우 무조건 유지
+          if (recent.id?.startsWith('local_')) return true;
+          // 3. 서버 데이터인 경우 서버 목록에 있을 때만 유지
           return publicTemplates.some(pub => pub.id === recent.id);
         });
 
