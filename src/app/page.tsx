@@ -7,7 +7,7 @@ import { TemplateService } from '@/lib/services';
 import { RecentTemplates } from '@/components/home/RecentTemplates'; 
 import { FileImporter } from '@/components/shared/FileImporter'; 
 import { Plus, Calculator, Globe } from 'lucide-react';
-
+import { NewTemplateButton } from '@/components/home/NewTemplateButton';
 export const revalidate = 0;
 
 export default async function Home() {
@@ -23,14 +23,8 @@ export default async function Home() {
             <span>OP-CO-CA</span>
           </div>
           <div className="flex gap-2">
-            {/* 파일 불러오기 버튼 추가 */}
             <FileImporter />
-            <Link href="/builder">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                새 템플릿
-              </Button>
-            </Link>
+            <NewTemplateButton />
           </div>
         </div>
       </header>
