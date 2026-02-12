@@ -27,7 +27,10 @@ export function FileImporter() {
           throw new Error("Invalid template format");
         }
 
-        const importedTemplate: Template = { ...json, id: undefined };
+        const importedTemplate: Template = { ...json };
+        delete importedTemplate.id;          
+        delete importedTemplate.created_at;  
+        delete importedTemplate.author_id;   
         setTemplate(importedTemplate);
         
         // 2. sonner 사용 방식 (성공)
