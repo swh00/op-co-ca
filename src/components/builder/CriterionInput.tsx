@@ -14,6 +14,30 @@ interface Props {
 }
 
 export function CriterionInput({ criterion, onUpdate, onRemove }: Props) {
+  // 가중치 입력 핸들러
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // 1. 다 지웠을 때는 0으로 처리 (NaN 방지)
+    if (value === '') {
+      onUpdate(criterion.id, { weight: 0 });
+      return;
+    }
+
+    const numValue = parseFloat(value);
+    // 2. 0 이상인 경우에만 업데이트 (음수 방지)
+    if (!isNaN(numValue) && numValue >= 0) {
+      onUpdate(criterion.id, { weight: numValue });
+    }
+  };
+
+  // 마이너스(-) 키 입력 방지
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === '-' || e.key === 'e') {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2 p-4 border rounded-lg bg-card text-card-foreground shadow-sm md:flex-row md:items-end">
       <div className="flex-1 space-y-1">
@@ -46,12 +70,15 @@ export function CriterionInput({ criterion, onUpdate, onRemove }: Props) {
         <Input 
           type="number" 
           step="0.1"
-          value={criterion.weight} 
-          onChange={(e) => onUpdate(criterion.id, { weight: parseFloat(e.target.value) || 0 })}
+          min="0" // 화살표로 음수 이동 방지
+          value={criterion.weight || ''} // 0일 때도 0 표시
+          onChange={handleWeightChange} // 핸들러 교체
+          onKeyDown={handleKeyDown}     // 키 입력 방지
+          onFocus={(e) => e.target.select()} // 클릭 시 전체 선택
         />
       </div>
 
-      <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => onRemove(criterion.id)}>
+      <Button variant="ghost" size="icon" className="text-destructive shrink-0 mb-0.5" onClick={() => onRemove(criterion.id)}>
         <Trash2 size={18} />
       </Button>
     </div>
