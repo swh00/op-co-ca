@@ -1,4 +1,3 @@
-// src/components/home/RecentTemplates.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,22 +5,38 @@ import { Template } from '@/types/template';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 
-export function RecentTemplates() {
+// Props로 현재 서버에서 가져온 최신 템플릿 목록을 받습니다.
+interface Props {
+  publicTemplates: Template[];
+}
+
+export function RecentTemplates({ publicTemplates }: Props) {
   const [recents, setRecents] = useState<Template[]>([]);
 
   useEffect(() => {
-    // localStorage에서 'recent_templates' 키로 저장된 데이터 로드
     const stored = localStorage.getItem('recent_templates');
     if (stored) {
       try {
-        setRecents(JSON.parse(stored));
+        const parsedRecents: Template[] = JSON.parse(stored);
+
+        const validRecents = parsedRecents.filter(recent => {
+          if (!recent.id) return true; // ID가 없으면 로컬 파일용이므로 유지
+          return publicTemplates.some(pub => pub.id === recent.id);
+        });
+
+        // 만약 삭제된 게 발견되어 리스트가 변했다면 로컬스토리지 업데이트
+        if (validRecents.length !== parsedRecents.length) {
+          localStorage.setItem('recent_templates', JSON.stringify(validRecents));
+        }
+
+        setRecents(validRecents);
       } catch (e) {
         console.error("Failed to parse recent templates");
       }
     }
-  }, []);
+  }, [publicTemplates]); // 서버 목록이 바뀔 때마다 체크
 
   if (recents.length === 0) return null;
 
@@ -32,11 +47,13 @@ export function RecentTemplates() {
         <h2 className="text-xl font-bold">최근 열어본 템플릿</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {recents.slice(0, 3).map((template) => ( // 최근 3개만 표시
+        {recents.slice(0, 3).map((template) => (
           <Card key={template.id || Math.random()} className="bg-slate-50 dark:bg-slate-900 border-dashed">
             <CardHeader className="p-4">
               <CardTitle className="text-base line-clamp-1">{template.title}</CardTitle>
-              <CardDescription className="text-xs line-clamp-1">{template.description}</CardDescription>
+              <CardDescription className="text-xs line-clamp-1">
+                {template.description || "설명이 없습니다."}
+              </CardDescription>
             </CardHeader>
             <CardFooter className="p-4 pt-0">
               <Link href={template.id ? `/calc/${template.id}` : '/builder'} className="w-full">
