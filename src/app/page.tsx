@@ -96,7 +96,7 @@ export default async function Home({
         </section>
 
         {/* 최근 본 템플릿 (검색 중일 땐 헷갈리니까 숨길 수도 있음. 여기선 항상 표시) */}
-        {!query && <RecentTemplates />}
+        {!query && <RecentTemplates publicTemplates={templates}/>}
       </div>
     </main>
   );
